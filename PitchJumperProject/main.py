@@ -1,13 +1,14 @@
 import pygame
 import os
 from constants import SCREEN_WIDTH, SCREEN_HEIGHT, FULLSCREEN, FPS, TILE_SIZE, TEXTURE_FOLDER, LEVEL_NAMES, FONT_PATH, \
-    FONT_SIZE, BACKGROUND_COLOR, SOUNDS_FOLDER, APP_ICON
+    FONT_SIZE, BACKGROUND_COLOR, SOUNDS_FOLDER, APP_ICON, TARGET_SCORES, FONT_SIZE_LARGE, TEXT_COLOR
 from tilemap import TileMap
 from player_controller import Player
 from hud import HUD
 from main_menu import MainMenu
 from end_screen import show_end_screen
 import sys
+
 
 class Game:
     def __init__(self):
@@ -26,6 +27,7 @@ class Game:
         self.level_complete = False
         self.victory_sound = self.load_sound("victorySound.mp3")
         self.button_click_sound = self.load_sound("button_click.wav")
+        self.bg_color = BACKGROUND_COLOR
 
     def load_sound(self, file_name):
         sound_path = os.path.join(SOUNDS_FOLDER, file_name)
@@ -79,6 +81,16 @@ class Game:
         self.hud = HUD(self.screen)
         self.camera_x = self.player.x * TILE_SIZE
         self.camera_y = self.player.y * TILE_SIZE
+
+        # Отображение целевого количества очков
+        font = pygame.font.Font(FONT_PATH, FONT_SIZE_LARGE)
+        target_score = TARGET_SCORES[self.current_level_id]
+        target_score_text = font.render(f"Цель: {target_score} очков", True, TEXT_COLOR)
+        self.screen.fill(self.bg_color)  # Заливка фона
+        self.screen.blit(target_score_text, (SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2))
+        pygame.display.flip()
+        pygame.time.wait(2000)  # Задержка для отображения сообщения
+
         return True
 
     def restart_level(self):
@@ -95,38 +107,6 @@ class Game:
         return self.load_level()
 
     def play_loose_anim(self):
-
-        lose_image_path = os.path.join(TEXTURE_FOLDER, "loose_anim.png")
-        try:
-            lose_image = pygame.image.load(lose_image_path).convert()
-            lose_image = pygame.transform.scale(lose_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
-        except Exception as e:
-            print(f"Ошибка загрузки изображения проигрыша: {e}")
-            lose_image = None
-
-        if lose_image:
-            self.screen.blit(lose_image, (0, 0))
-            pygame.display.flip()
-
-        sound = self.load_sound("loose_anim.mp3")
-        if sound:
-            sound.set_volume(1000)
-            sound.play()
-
-        if sound:
-            while pygame.mixer.get_busy():
-
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        pygame.quit()
-                        sys.exit()
-                pygame.time.wait(50)
-
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        file_path = os.path.join(desktop_path, "you_lose.txt")
-        with open(file_path, "w") as f:
-            f.writelines([f"AHAHAH" * 100 + "\n" for _ in range(100)])
-
         pygame.quit()
         sys.exit()
 
@@ -156,8 +136,13 @@ class Game:
                     case pygame.QUIT:
                         self.running = False
                     case pygame.USEREVENT if self.level_complete:
-                        show_end_screen(self.screen, self.clock, True, self.start_new_level, self.draw_background,
-                                        self.player.hp)
+                        target_score = TARGET_SCORES[self.current_level_id]
+                        if self.player.hp >= target_score:
+                            show_end_screen(self.screen, self.clock, True, self.start_new_level, self.draw_background,
+                                            self.player.hp)
+                        else:
+                            self.restart_level()
+                            self.level_complete = False
 
                     case pygame.KEYDOWN:
                         match event.key:

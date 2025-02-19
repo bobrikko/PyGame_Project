@@ -11,6 +11,7 @@ TILE_SIZE = 64  # Размер одной клетки тайла
 LEVEL_NAMES = ["Level_1.data", "Level_2.data", "Level_3.data", "Level_4.data", "Level_5.data", "Level_6.data", "Level_7.data"]  # Файл с уровнем
 TEXTURE_FOLDER = "Textures"  # Папка с текстурами
 LEFT_ARROW_SPRITE = "Textures\LeftArrow.png"
+TARGET_SCORES = [5, 2, 12, 10, 15, 6, 8]
 
 FONT_SIZE = 24  # Размер пользовательского шрифта
 
